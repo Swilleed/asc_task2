@@ -23,23 +23,23 @@ int main(void)
     Encoder_Init();
     Timer_Init();
 
-    OLED_ShowString(1, 1, "Speed:");
+    //  OLED_ShowString(1, 1, "Speed:");
 
     while (1) {
-        OLED_ShowNum(1, 13, EncoderCount1, 5);
-        OLED_ShowNum(2, 13, EncoderCount2, 5);
-        OLED_ShowString(1, 1, "Speed:");
-        OLED_ShowNum(1, 7, Speed1, 3);
-        OLED_ShowNum(2, 7, Speed2, 3);
+        OLED_ShowSignedNum(1, 7, EncoderCount1, 6);
+        OLED_ShowSignedNum(2, 7, EncoderCount2, 6);
+        // OLED_ShowString(1, 1, "Speed:");
+        OLED_ShowSignedNum(1, 1, Speed1, 3);
+        OLED_ShowSignedNum(2, 1, Speed2, 3);
 
         KeyNum = Key_GetNum();
         if (statu == 0) {
-            Motor_SetSpeed(20, 100);
+            Motor_SetSpeed(0, 0);
         }
         else if (statu == 1) {
             Motor_SetSpeed(Speed1, Speed2);
-            OLED_ShowSignedNum(1, 7, Speed1, 3);
-            OLED_ShowSignedNum(2, 7, Speed2, 3);
+            OLED_ShowSignedNum(1, 1, Speed1, 4);
+            OLED_ShowSignedNum(2, 1, Speed2, 4);
         }
     }
 }
