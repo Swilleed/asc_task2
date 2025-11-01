@@ -8,6 +8,8 @@ uint8_t KeyNum;
 int8_t Speed1, Speed2;
 int8_t CurrentSpeed1, CurrentSpeed2;
 uint8_t statu = 0;
+uint64_t EncoderCount1 = 0;
+uint64_t EncoderCount2 = 0;
 
 int main(void)
 {
@@ -27,5 +29,16 @@ int main(void)
             OLED_ShowSignedNum(1, 7, Speed1, 3);
             OLED_ShowSignedNum(2, 7, Speed2, 3);
         }
+    }
+}
+
+void TIM2_IRQHandler(void)
+{
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET) {
+        Speed1 = Encoder1_Get();
+        Speed2 = Encoder2_Get();
+        EncoderCount1 += Speed1;
+        EncoderCount2 += Speed2;
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
     }
 }
