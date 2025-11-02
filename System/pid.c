@@ -1,6 +1,10 @@
 #include "stm32f10x.h"
 #include "pid.h"
 
+extern float kp;
+extern float ki;
+extern float kd;
+
 void PID_Init(PID_TypeDef *pid)
 {
     pid->Err = 0.0f;
@@ -8,6 +12,11 @@ void PID_Init(PID_TypeDef *pid)
     pid->Err_Prev = 0.0f;
     pid->Integral = 0.0f;
     pid->Output = 0.0f;
+    pid->OutputMax = 100.0f; // 设置默认输出限幅
+    pid->OutputMin = -100.0f;
+    pid->Kp = kp; // 使用外部定义的参数
+    pid->Ki = ki;
+    pid->Kd = kd;
 }
 
 float PID_Calculate(PID_TypeDef *pid, float target, float actual)

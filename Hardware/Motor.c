@@ -1,17 +1,59 @@
 #include "stm32f10x.h" // Device header
+#include "Motor.h"
 #include "PWM.h"
-#include "pid.h"
 
-typedef struct Motor {
-    PID_TypeDef PID;
+extern int8_t CurrentSpeed1;
+extern int8_t CurrentSpeed2;
 
-    int8_t TargetSpeed;
-    int8_t CurrentSpeed;
-    uint32_t EncoderCount;
-} Motor_TypeDef;
+#define MOTOR_PWM_MAX 99
 
 Motor_TypeDef Motor1;
 Motor_TypeDef Motor2;
+
+static uint16_t Motor_ClampDuty(int16_t value)
+{
+    if (value < 0) {
+        value = -value;
+    }
+    if (value > MOTOR_PWM_MAX) {
+        value = MOTOR_PWM_MAX;
+    }
+    return (uint16_t)value;
+}
+
+static void Motor_WriteDuty(Motor_TypeDef *motor, uint16_t duty)
+{
+    if (motor == &Motor1) {
+        PWM_SetCompare3(duty);
+    }
+    else if (motor == &Motor2) {
+        PWM_SetCompare4(duty);
+    }
+}
+
+static void Motor_SetDirectionPins(Motor_TypeDef *motor, int16_t command)
+{
+    if (motor == &Motor1) {
+        if (command >= 0) {
+            GPIO_SetBits(GPIOB, GPIO_Pin_12);
+            GPIO_ResetBits(GPIOB, GPIO_Pin_13);
+        }
+        else {
+            GPIO_ResetBits(GPIOB, GPIO_Pin_12);
+            GPIO_SetBits(GPIOB, GPIO_Pin_13);
+        }
+    }
+    else if (motor == &Motor2) {
+        if (command >= 0) {
+            GPIO_SetBits(GPIOB, GPIO_Pin_14);
+            GPIO_ResetBits(GPIOB, GPIO_Pin_15);
+        }
+        else {
+            GPIO_ResetBits(GPIOB, GPIO_Pin_14);
+            GPIO_SetBits(GPIOB, GPIO_Pin_15);
+        }
+    }
+}
 
 void Motor_Init(void)
 {
@@ -25,55 +67,72 @@ void Motor_Init(void)
     GPIO_Init(GPIOB, &GPIO_InitStructure);
 
     PWM_Init();
+
+    PID_Init(&Motor1.PID);
+    PID_Init(&Motor2.PID);
+
+    Motor1.TargetSpeed = 0;
+    Motor1.CurrentSpeed = 0;
+    Motor1.EncoderCount = 0;
+    Motor2.TargetSpeed = 0;
+    Motor2.CurrentSpeed = 0;
+    Motor2.EncoderCount = 0;
+
+    Motor_SetDirectionPins(&Motor1, 0);
+    Motor_SetDirectionPins(&Motor2, 0);
+    Motor_WriteDuty(&Motor1, 0);
+    Motor_WriteDuty(&Motor2, 0);
 }
 
-// speed1: 电机1速度（-100~100），speed2: 电机2速度（-100~100）
-void Motor_SetSpeed(int8_t speed1, int8_t speed2)
+void Motor_SetSpeed(Motor_TypeDef *motor, int16_t speed)
 {
-    // Motor1: PB12, PB13 控制方向，PA2(PWM3) 控制速度
-    if (speed1 >= 0) {
-        GPIO_SetBits(GPIOB, GPIO_Pin_12);
-        GPIO_ResetBits(GPIOB, GPIO_Pin_13);
+    if (!motor) {
+        return;
     }
-    else {
-        GPIO_ResetBits(GPIOB, GPIO_Pin_12);
-        GPIO_SetBits(GPIOB, GPIO_Pin_13);
-        speed1 = -speed1;
-    }
-    if (speed1 > 100)
-        speed1 = 100;
-    PWM_SetCompare3(speed1);
 
-    // Motor2: PB14, PB15 控制方向，PA3(PWM4) 控制速度
-    if (speed2 >= 0) {
-        GPIO_SetBits(GPIOB, GPIO_Pin_14);
-        GPIO_ResetBits(GPIOB, GPIO_Pin_15);
-    }
-    else {
-        GPIO_ResetBits(GPIOB, GPIO_Pin_14);
-        GPIO_SetBits(GPIOB, GPIO_Pin_15);
-        speed2 = -speed2;
-    }
-    if (speed2 > 100)
-        speed2 = 100;
-    PWM_SetCompare4(speed2);
-}
-
-void Motor_SetSpeed_PID(Motor_TypeDef *motor, float speed)
-{
     motor->TargetSpeed = speed;
+    Motor_SetDirectionPins(motor, speed);
+    Motor_WriteDuty(motor, Motor_ClampDuty(speed));
+}
+
+void Motor_SetDirection(Motor_TypeDef *motor, int16_t speed)
+{
+    if (!motor) {
+        return;
+    }
+
+    Motor_SetDirectionPins(motor, speed);
 }
 
 void Motor_Speed_Update(Motor_TypeDef *motor)
 {
+    if (!motor) {
+        return;
+    }
+
+    motor->CurrentSpeed = (motor == &Motor1) ? CurrentSpeed1 : CurrentSpeed2;
+    motor->EncoderCount += motor->CurrentSpeed;
+
     float output = PID_Calculate(&motor->PID, motor->TargetSpeed, motor->CurrentSpeed);
-    // 只转一个电机
-    Motor_SetSpeed((int8_t)output, 0);
+    Motor_SetDirectionPins(motor, (int16_t)output);
+    Motor_WriteDuty(motor, Motor_ClampDuty((int16_t)output));
 }
 
-void Motor_Follow_Update(Motor_TypeDef *motor)
+void Motor_Follow_Target(Motor_TypeDef *motor)
 {
+    if (!motor) {
+        return;
+    }
+
+    motor->CurrentSpeed = (motor == &Motor1) ? CurrentSpeed1 : CurrentSpeed2;
+    motor->EncoderCount += motor->CurrentSpeed;
 
     float output = PID_Calculate(&motor->PID, motor->TargetSpeed, motor->CurrentSpeed);
-    // 通过pid控制电机编码器计数值一致
+    Motor_SetDirectionPins(motor, (int16_t)output);
+    Motor_WriteDuty(motor, Motor_ClampDuty((int16_t)output));
+}
+void Motor_Encoder_Update(Motor_TypeDef *motor)
+{
+    motor->CurrentSpeed = (motor == &Motor1) ? CurrentSpeed1 : CurrentSpeed2;
+    motor->EncoderCount += motor->CurrentSpeed;
 }
