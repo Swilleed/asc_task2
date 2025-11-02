@@ -9,13 +9,15 @@
 #include "Delay.h"
 
 uint8_t KeyNum;
-int8_t TargetSpeed;
-;
+int8_t TargetSpeed = 20;
 int8_t CurrentSpeed1, CurrentSpeed2;
 uint8_t statu = 0;
 int64_t EncoderCount1 = 0;
 int64_t EncoderCount2 = 0;
 extern Motor_TypeDef Motor1;
+float kp = 2.0f;
+float ki = 0.5f;
+float kd = 0.1f;
 
 int main(void)
 {
@@ -31,15 +33,15 @@ int main(void)
         OLED_ShowSignedNum(1, 7, EncoderCount1, 6);
         OLED_ShowSignedNum(2, 7, EncoderCount2, 6);
         // OLED_ShowString(1, 1, "Speed:");
-        OLED_ShowSignedNum(1, 1, Speed1, 3);
-        OLED_ShowSignedNum(2, 1, Speed2, 3);
+        OLED_ShowSignedNum(1, 1, CurrentSpeed1, 3);
+        OLED_ShowSignedNum(2, 1, CurrentSpeed2, 3);
 
         KeyNum = Key_GetNum();
         if (statu == 0) {
-            Motor_SetSpeed(40, 0);
+            Motor_SetSpeed(&Motor1, TargetSpeed);
+            Motor_SetDirection(&Motor1, TargetSpeed);
             // 用pid控制电机速度
             // 控制速度
-            Motor_SetSpeed_PID(&Motor1, 40);
             Motor_Speed_Update(&Motor1);
             // Motor_SetSpeed_PID(&Motor2, Speed2);
 
@@ -49,8 +51,8 @@ int main(void)
         }
         else if (statu == 1) {
             // Motor_SetSpeed(Speed1, Speed2);
-            OLED_ShowSignedNum(1, 1, Speed1, 4);
-            OLED_ShowSignedNum(2, 1, Speed2, 4);
+            // OLED_ShowSignedNum(1, 1, Speed1, 4);
+            // OLED_ShowSignedNum(2, 1, Speed2, 4);
         }
     }
 }
