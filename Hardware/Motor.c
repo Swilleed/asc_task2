@@ -1,13 +1,17 @@
 #include "stm32f10x.h" // Device header
 #include "PWM.h"
 #include "pid.h"
+#include "Encoder.h"
+
+extern int8_t CurrentSpeed1;
+extern int8_t CurrentSpeed2;
 
 typedef struct Motor {
     PID_TypeDef PID;
 
     int8_t TargetSpeed;
     int8_t CurrentSpeed;
-    uint32_t EncoderCount;
+    // uint32_t EncoderCount;
 } Motor_TypeDef;
 
 Motor_TypeDef Motor1;
@@ -27,53 +31,16 @@ void Motor_Init(void)
     PWM_Init();
 }
 
-// speed1: 电机1速度（-100~100），speed2: 电机2速度（-100~100）
-void Motor_SetSpeed(int8_t speed1, int8_t speed2)
-{
-    // Motor1: PB12, PB13 控制方向，PA2(PWM3) 控制速度
-    if (speed1 >= 0) {
-        GPIO_SetBits(GPIOB, GPIO_Pin_12);
-        GPIO_ResetBits(GPIOB, GPIO_Pin_13);
-    }
-    else {
-        GPIO_ResetBits(GPIOB, GPIO_Pin_12);
-        GPIO_SetBits(GPIOB, GPIO_Pin_13);
-        speed1 = -speed1;
-    }
-    if (speed1 > 100)
-        speed1 = 100;
-    PWM_SetCompare3(speed1);
-
-    // Motor2: PB14, PB15 控制方向，PA3(PWM4) 控制速度
-    if (speed2 >= 0) {
-        GPIO_SetBits(GPIOB, GPIO_Pin_14);
-        GPIO_ResetBits(GPIOB, GPIO_Pin_15);
-    }
-    else {
-        GPIO_ResetBits(GPIOB, GPIO_Pin_14);
-        GPIO_SetBits(GPIOB, GPIO_Pin_15);
-        speed2 = -speed2;
-    }
-    if (speed2 > 100)
-        speed2 = 100;
-    PWM_SetCompare4(speed2);
-}
-
-void Motor_SetSpeed_PID(Motor_TypeDef *motor, float speed)
+void Motor_SetSpeed(Motor_TypeDef *motor, int8_t speed)
 {
     motor->TargetSpeed = speed;
+    PWM_SetCompare3(speed);
 }
 
 void Motor_Speed_Update(Motor_TypeDef *motor)
 {
-    float output = PID_Calculate(&motor->PID, motor->TargetSpeed, motor->CurrentSpeed);
-    // 只转一个电机
-    Motor_SetSpeed((int8_t)output, 0);
-}
-
-void Motor_Follow_Update(Motor_TypeDef *motor)
-{
-
-    float output = PID_Calculate(&motor->PID, motor->TargetSpeed, motor->CurrentSpeed);
-    // 通过pid控制电机编码器计数值一致
+    motor->CurrentSpeed = (motor == &Motor1) ? CurrentSpeed1 : CurrentSpeed2;
+    // 更新电机速度
+    PID_Calculate(&motor->PID, motor->TargetSpeed, motor->CurrentSpeed);
+    PWM_SetCompare3((uint16_t)motor->PID.Output);
 }
