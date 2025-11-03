@@ -54,7 +54,7 @@ void Encoder_Init(void)
     TIM_Cmd(TIM4, ENABLE);
 }
 
-int16_t Encoder1_Get(void)
+int32_t Encoder1_Get(void)
 {
     int16_t Temp;
     Temp = TIM_GetCounter(TIM3);
@@ -62,7 +62,7 @@ int16_t Encoder1_Get(void)
     return Temp;
 }
 
-int16_t Encoder2_Get(void)
+int32_t Encoder2_Get(void)
 {
     int16_t Temp;
     Temp = TIM_GetCounter(TIM4);
