@@ -4,9 +4,9 @@
 #include "Encoder.h"
 #include "pid.h"
 
-extern int16_t TargetSpeed;
-extern int32_t CurrentSpeed1;
-extern int32_t CurrentSpeed2;
+extern volatile int8_t TargetSpeed;
+extern volatile int32_t CurrentSpeed1;
+extern volatile int32_t CurrentSpeed2;
 extern PID_TypeDef Motor1_PID;
 extern PID_TypeDef Motor2_PID;
 
@@ -39,7 +39,7 @@ void Motor_SetPWM(uint32_t pwm)
 
 void Motor_UpdateSpeed(void)
 {
-    CurrentSpeed1 = Encoder1_Get();
-    PID_Calculate(&Motor1_PID, TargetSpeed, CurrentSpeed1);
+    float output = PID_Calculate(&Motor1_PID, (float)TargetSpeed, (float)CurrentSpeed1);
+    Motor1_PID.Output = output;
     Motor_SetPWM((uint32_t)(Motor1_PID.Output));
 }
