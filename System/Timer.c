@@ -6,6 +6,7 @@ void Timer_Init(void)
 
     TIM_InternalClockConfig(TIM1);
 
+    // 中断频率： 10kHz/100=100Hz，10ms中断一次
     TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
     TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;

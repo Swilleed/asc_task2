@@ -1,6 +1,7 @@
 #ifndef __PID_H
 #define __PID_H
 
+// PID参数结构体
 typedef struct {
     float TargetValue; // 目标值
     float ActualValue; // 实际值

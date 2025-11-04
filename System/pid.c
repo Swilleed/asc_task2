@@ -14,11 +14,15 @@ void PID_Init(PID_TypeDef *pid)
     pid->Output = 0.0f;
     pid->OutputMax = 99.0f; // 与 PWM 占空比范围一致
     pid->OutputMin = -99.0f;
-    pid->Kp = kp; // 使用外部定义的参数
+    pid->Kp = kp; // 使用外部定义的全局变量
     pid->Ki = ki;
     pid->Kd = kd;
 }
 
+// PID计算函数
+// 参数: target: 目标值
+// 参数: actual: 实际值
+// 输出: output
 float PID_Calculate(PID_TypeDef *pid, float target, float actual)
 {
     pid->TargetValue = target;
@@ -31,6 +35,7 @@ float PID_Calculate(PID_TypeDef *pid, float target, float actual)
     pid->Integral += pid->Err;
 
     // 微分项计算
+    // 累加
     float derivative = pid->Err - pid->Err_Last;
 
     // PID输出计算

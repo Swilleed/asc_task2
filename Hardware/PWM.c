@@ -34,6 +34,8 @@ void PWM_Init(void)
 }
 
 // PA2
+// 设定电机1的PWM占空比
+// 值域0-100
 void PWM_SetCompare3(uint16_t Compare)
 {
     TIM_SetCompare3(TIM2, Compare);

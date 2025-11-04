@@ -15,6 +15,7 @@ extern PID_TypeDef Motor2_PID;
 
 #define MOTOR_PWM_MAX 99
 
+// 电机初始化
 void Motor_Init(void)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
@@ -32,6 +33,7 @@ void Motor_Init(void)
     PWM_Init();
 }
 
+// 对电机1设定驱动力
 void Motor_SetPWM(int32_t pwm)
 {
     int32_t magnitude = pwm;
@@ -53,6 +55,7 @@ void Motor_SetPWM(int32_t pwm)
     PWM_SetCompare3((uint16_t)magnitude);
 }
 
+// 更新电机速度控制
 void Motor_UpdateSpeed(void)
 {
     float output = PID_Calculate(&Motor1_PID, (float)TargetSpeed, (float)CurrentSpeed1);
@@ -60,12 +63,14 @@ void Motor_UpdateSpeed(void)
     Motor_SetPWM((int32_t)Motor1_PID.Output);
 }
 
+// 电机位置跟随控制
 void Motor_Follow_Position(void)
 {
     float target = (float)EncoderCount2;
     float actual = (float)EncoderCount1;
     float error = target - actual;
 
+    // 限制误差范围
     if (error > 500.0f) {
         error = 500.0f;
     }
@@ -78,6 +83,7 @@ void Motor_Follow_Position(void)
     float output = PID_Calculate(&Motor2_PID, target, actual);
     Motor2_PID.Output = output;
 
+    // 死区处理
     if (output > -1.5f && output < 1.5f) {
         output = 0.0f;
     }

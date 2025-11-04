@@ -1,3 +1,5 @@
+/*编码器测速*/
+
 #include "stm32f10x.h" // Device header
 
 void Encoder_Init(void)
@@ -54,6 +56,8 @@ void Encoder_Init(void)
     TIM_Cmd(TIM4, ENABLE);
 }
 
+// 获取编码器1计数值并清零
+// 在tim1中断中调用，10ms一次
 int32_t Encoder1_Get(void)
 {
     int16_t Temp;
@@ -61,7 +65,6 @@ int32_t Encoder1_Get(void)
     TIM_SetCounter(TIM3, 0);
     return Temp;
 }
-
 int32_t Encoder2_Get(void)
 {
     int16_t Temp;

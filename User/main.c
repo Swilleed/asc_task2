@@ -8,10 +8,10 @@
 #include "pid.h"
 #include "Serial.h"
 
-volatile uint8_t KeyNum;
+volatile uint8_t statu = 0; // 当前任务状态，0-速度控制，1-位置控制
+
 volatile int32_t TargetSpeed = 50;
 volatile int32_t CurrentSpeed1, CurrentSpeed2;
-volatile uint8_t statu = 0;
 volatile int64_t EncoderCount1 = 0;
 volatile int64_t EncoderCount2 = 0;
 volatile float kp = 0.8f;
@@ -41,6 +41,7 @@ int main(void)
         OLED_ShowSignedNum(2, 1, CurrentSpeed2, 4);
         OLED_ShowSignedNum(3, 1, TargetSpeed, 4);
 
+        // 处理串口命令
         int16_t requestedSpeed;
         if (Serial_TryParseTarget(&requestedSpeed)) {
             TargetSpeed = requestedSpeed;
@@ -55,6 +56,7 @@ int main(void)
         if (statu == 0) {
             OLED_ShowString(3, 10, "SpeedControl");
             if (Key_Check(KEY_1, KEY_SINGLE)) {
+                // 状态切换到位置控制
                 Motor_SetPWM(0);
                 kp = 0.4f;
                 ki = 0.02f;
@@ -78,25 +80,27 @@ int main(void)
                 statu = 0;
             }
         }
+    }
+}
 
-        void TIM1_UP_IRQHandler(void)
-        {
-            Key_Tick();
+void TIM1_UP_IRQHandler(void)
+{
+    Key_Tick();
 
-            if (TIM_GetITStatus(TIM1, TIM_IT_Update) == SET) {
-                CurrentSpeed1 = Encoder1_Get();
-                CurrentSpeed2 = Encoder2_Get();
-                EncoderCount1 += CurrentSpeed1;
-                EncoderCount2 += CurrentSpeed2;
-                TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
+    if (TIM_GetITStatus(TIM1, TIM_IT_Update) == SET) {
+        CurrentSpeed1 = Encoder1_Get();
+        CurrentSpeed2 = Encoder2_Get();
+        EncoderCount1 += CurrentSpeed1;
+        EncoderCount2 += CurrentSpeed2;
+        TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 
-                if (statu == 0) {
-                    Motor_UpdateSpeed();
-                }
-                else if (statu == 1) {
-                    Motor_Follow_Position();
-                }
-
-                SpeedReportFlag = 1;
-            }
+        if (statu == 0) {
+            Motor_UpdateSpeed();
         }
+        else if (statu == 1) {
+            Motor_Follow_Position();
+        }
+
+        SpeedReportFlag = 1;
+    }
+}
