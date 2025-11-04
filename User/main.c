@@ -53,7 +53,7 @@ int main(void)
         }
 
         if (statu == 0) {
-            OLED_ShowNum(3, 10, 0, 2);
+            OLED_ShowString(3, 10, "SpeedControl");
             if (Key_Check(KEY_1, KEY_SINGLE)) {
                 Motor_SetPWM(0);
                 kp = 0.4f;
@@ -66,30 +66,37 @@ int main(void)
             }
         }
         else if (statu == 1) {
-            OLED_ShowNum(3, 10, 1, 2);
-            // TODO: add additional runtime key handling if needed
-        }
-    }
-}
-
-void TIM1_UP_IRQHandler(void)
-{
-    Key_Tick();
-
-    if (TIM_GetITStatus(TIM1, TIM_IT_Update) == SET) {
-        CurrentSpeed1 = Encoder1_Get();
-        CurrentSpeed2 = Encoder2_Get();
-        EncoderCount1 += CurrentSpeed1;
-        EncoderCount2 += CurrentSpeed2;
-        TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
-
-        if (statu == 0) {
-            Motor_UpdateSpeed();
-        }
-        else if (statu == 1) {
-            Motor_Follow_Position();
+            OLED_ShowString(3, 10, "PositionControl");
+            if (Key_Check(KEY_1, KEY_SINGLE)) {
+                Motor_SetPWM(0);
+                kp = 0.8f;
+                ki = 0.1f;
+                kd = 0.2f;
+                PID_Init(&Motor1_PID);
+                EncoderCount1 = 0;
+                EncoderCount2 = 0;
+                statu = 0;
+            }
         }
 
-        SpeedReportFlag = 1;
-    }
-}
+        void TIM1_UP_IRQHandler(void)
+        {
+            Key_Tick();
+
+            if (TIM_GetITStatus(TIM1, TIM_IT_Update) == SET) {
+                CurrentSpeed1 = Encoder1_Get();
+                CurrentSpeed2 = Encoder2_Get();
+                EncoderCount1 += CurrentSpeed1;
+                EncoderCount2 += CurrentSpeed2;
+                TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
+
+                if (statu == 0) {
+                    Motor_UpdateSpeed();
+                }
+                else if (statu == 1) {
+                    Motor_Follow_Position();
+                }
+
+                SpeedReportFlag = 1;
+            }
+        }

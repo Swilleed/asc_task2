@@ -58,7 +58,6 @@ void Motor_UpdateSpeed(void)
     float output = PID_Calculate(&Motor1_PID, (float)TargetSpeed, (float)CurrentSpeed1);
     Motor1_PID.Output = output;
     Motor_SetPWM((int32_t)Motor1_PID.Output);
-    OLED_ShowSignedNum(4, 1, (int32_t)(Motor1_PID.Output), 4);
 }
 
 void Motor_Follow_Position(void)
@@ -84,5 +83,4 @@ void Motor_Follow_Position(void)
     }
 
     Motor_SetPWM((int32_t)output);
-    OLED_ShowSignedNum(4, 6, (int32_t)(output), 4);
 }
