@@ -5,7 +5,7 @@
 #include "pid.h"
 
 void Motor_Init(void);
-void Motor_SetPWM(uint32_t pwm);
+void Motor_SetPWM(int32_t pwm);
 void Motor_UpdateSpeed(void);
 
 #endif

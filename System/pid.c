@@ -12,8 +12,8 @@ void PID_Init(PID_TypeDef *pid)
     pid->Err_Prev = 0.0f;
     pid->Integral = 0.0f;
     pid->Output = 0.0f;
-    pid->OutputMax = 100.0f; // 设置默认输出限幅
-    pid->OutputMin = -100.0f;
+    pid->OutputMax = 99.0f; // 与 PWM 占空比范围一致
+    pid->OutputMin = -99.0f;
     pid->Kp = kp; // 使用外部定义的参数
     pid->Ki = ki;
     pid->Kd = kd;

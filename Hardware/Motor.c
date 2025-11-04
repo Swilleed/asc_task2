@@ -3,8 +3,9 @@
 #include "PWM.h"
 #include "Encoder.h"
 #include "pid.h"
+#include "OLED.h"
 
-extern volatile int8_t TargetSpeed;
+extern volatile int32_t TargetSpeed;
 extern volatile int32_t CurrentSpeed1;
 extern volatile int32_t CurrentSpeed2;
 extern PID_TypeDef Motor1_PID;
@@ -23,23 +24,37 @@ void Motor_Init(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
 
-    GPIO_SetBits(GPIOB, GPIO_Pin_12);
-    GPIO_ResetBits(GPIOB, GPIO_Pin_13);
+    GPIO_ResetBits(GPIOB, GPIO_Pin_12);
+    GPIO_SetBits(GPIOB, GPIO_Pin_13);
 
     PWM_Init();
 }
 
-void Motor_SetPWM(uint32_t pwm)
+void Motor_SetPWM(int32_t pwm)
 {
-    if (pwm > MOTOR_PWM_MAX) {
-        pwm = MOTOR_PWM_MAX;
+    int32_t magnitude = pwm;
+
+    if (magnitude >= 0) {
+        GPIO_ResetBits(GPIOB, GPIO_Pin_12);
+        GPIO_SetBits(GPIOB, GPIO_Pin_13);
     }
-    PWM_SetCompare3(pwm);
+    else {
+        GPIO_SetBits(GPIOB, GPIO_Pin_12);
+        GPIO_ResetBits(GPIOB, GPIO_Pin_13);
+        magnitude = -magnitude;
+    }
+
+    if (magnitude > MOTOR_PWM_MAX) {
+        magnitude = MOTOR_PWM_MAX;
+    }
+
+    PWM_SetCompare3((uint16_t)magnitude);
 }
 
 void Motor_UpdateSpeed(void)
 {
     float output = PID_Calculate(&Motor1_PID, (float)TargetSpeed, (float)CurrentSpeed1);
     Motor1_PID.Output = output;
-    Motor_SetPWM((uint32_t)(Motor1_PID.Output));
+    Motor_SetPWM((int32_t)Motor1_PID.Output);
+    OLED_ShowSignedNum(4, 1, (int32_t)(Motor1_PID.Output), 4);
 }

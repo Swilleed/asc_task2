@@ -9,7 +9,7 @@
 #include "Delay.h"
 
 volatile uint8_t KeyNum;
-volatile int8_t TargetSpeed = 20;
+volatile int32_t TargetSpeed = 60;
 volatile int32_t CurrentSpeed1, CurrentSpeed2;
 volatile uint8_t statu = 0;
 volatile int64_t EncoderCount1 = 0;
@@ -42,10 +42,10 @@ int main(void)
 
         KeyNum = Key_GetNum();
         if (statu == 0) {
-            Motor_SetPWM(20);
-            // 用pid控制电机速度
-            // 控制速度
-            // Motor_SetSpeed_PID(&Motor2, Speed2);
+            // Motor_SetPWM(20);
+            //  用pid控制电机速度
+            //  控制速度
+            //  Motor_SetSpeed_PID(&Motor2, Speed2);
 
             if (KeyNum == 1) {
                 statu = 1;
