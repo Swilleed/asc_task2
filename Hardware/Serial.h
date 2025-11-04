@@ -1,6 +1,7 @@
 #ifndef __SERIAL_H
 #define __SERIAL_H
 
+#include <stdint.h>
 #include <stdio.h>
 
 extern char Serial_RxPacket[];
@@ -12,5 +13,6 @@ void Serial_SendArray(uint8_t *Array, uint16_t Length);
 void Serial_SendString(char *String);
 void Serial_SendNumber(uint32_t Number, uint8_t Length);
 void Serial_Printf(char *format, ...);
+uint8_t Serial_TryParseTarget(int16_t *target);
 
 #endif

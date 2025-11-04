@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 char Serial_RxPacket[100]; //"@MSG\r\n"
 uint8_t Serial_RxFlag;
