@@ -56,8 +56,8 @@ int main(void)
             OLED_ShowNum(3, 10, 0, 2);
             if (Key_Check(KEY_1, KEY_SINGLE)) {
                 Motor_SetPWM(0);
-                kp = 0.2f;
-                ki = 0.01f;
+                kp = 0.4f;
+                ki = 0.02f;
                 kd = 0.1f;
                 PID_Init(&Motor2_PID);
                 EncoderCount1 = 0;
