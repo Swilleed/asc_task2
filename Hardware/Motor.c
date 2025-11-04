@@ -63,8 +63,18 @@ void Motor_UpdateSpeed(void)
 
 void Motor_Follow_Position(void)
 {
-    const float target = (float)EncoderCount2;
-    const float actual = (float)EncoderCount1;
+    float target = (float)EncoderCount2;
+    float actual = (float)EncoderCount1;
+    float error = target - actual;
+
+    if (error > 500.0f) {
+        error = 500.0f;
+    }
+    else if (error < -500.0f) {
+        error = -500.0f;
+    }
+
+    target = actual + error;
 
     float output = PID_Calculate(&Motor2_PID, target, actual);
     Motor2_PID.Output = output;
