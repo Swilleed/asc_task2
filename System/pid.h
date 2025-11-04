@@ -16,6 +16,5 @@ typedef struct {
 
 void PID_Init(PID_TypeDef *pid);
 float PID_Calculate(PID_TypeDef *pid, float target, float actual);
-float PID_pos_Calculate(PID_TypeDef *pid, float target, float actual);
 
 #endif

@@ -7,5 +7,6 @@
 void Motor_Init(void);
 void Motor_SetPWM(int32_t pwm);
 void Motor_UpdateSpeed(void);
+void Motor_Follow_Position(void);
 
 #endif

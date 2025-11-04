@@ -52,13 +52,17 @@ int main(void)
             Serial_Printf("@CUR:%ld\r\n", (long)CurrentSpeed1);
         }
 
-        KeyNum = Key_GetNum();
         if (statu == 0) {
-            if (KeyNum == 1) {
+            OLED_ShowNum(3, 10, 0, 2);
+            if (Key_Check(KEY_1, KEY_SINGLE)) {
+                Motor_SetPWM(0);
+                EncoderCount1 = 0;
+                EncoderCount2 = 0;
                 statu = 1;
             }
         }
         else if (statu == 1) {
+            OLED_ShowNum(3, 10, 1, 2);
             // TODO: add additional runtime key handling if needed
         }
     }
@@ -66,6 +70,8 @@ int main(void)
 
 void TIM1_UP_IRQHandler(void)
 {
+    Key_Tick();
+
     if (TIM_GetITStatus(TIM1, TIM_IT_Update) == SET) {
         CurrentSpeed1 = Encoder1_Get();
         CurrentSpeed2 = Encoder2_Get();
@@ -75,6 +81,9 @@ void TIM1_UP_IRQHandler(void)
 
         if (statu == 0) {
             Motor_UpdateSpeed();
+        }
+        else if (statu == 1) {
+            Motor_Follow_Position();
         }
 
         SpeedReportFlag = 1;

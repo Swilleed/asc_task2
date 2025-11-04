@@ -8,6 +8,8 @@
 extern volatile int32_t TargetSpeed;
 extern volatile int32_t CurrentSpeed1;
 extern volatile int32_t CurrentSpeed2;
+extern volatile int64_t EncoderCount1;
+extern volatile int64_t EncoderCount2;
 extern PID_TypeDef Motor1_PID;
 extern PID_TypeDef Motor2_PID;
 
@@ -57,4 +59,20 @@ void Motor_UpdateSpeed(void)
     Motor1_PID.Output = output;
     Motor_SetPWM((int32_t)Motor1_PID.Output);
     OLED_ShowSignedNum(4, 1, (int32_t)(Motor1_PID.Output), 4);
+}
+
+void Motor_Follow_Position(void)
+{
+    const float target = (float)EncoderCount2;
+    const float actual = (float)EncoderCount1;
+
+    float output = PID_Calculate(&Motor2_PID, target, actual);
+    Motor2_PID.Output = output;
+
+    if (output > -1.5f && output < 1.5f) {
+        output = 0.0f;
+    }
+
+    Motor_SetPWM((int32_t)output);
+    OLED_ShowSignedNum(4, 6, (int32_t)(output), 4);
 }
