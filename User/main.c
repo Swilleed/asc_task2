@@ -8,7 +8,14 @@
 #include "pid.h"
 #include "Serial.h"
 
-volatile uint8_t statu = 0; // 当前任务状态，0-速度控制，1-位置控制
+#include <inttypes.h>
+
+typedef enum {
+    CTRL_MODE_SPEED = 0,
+    CTRL_MODE_POSITION = 1
+} control_mode_t;
+
+volatile control_mode_t control_mode = CTRL_MODE_SPEED; // 当前任务状态
 
 volatile int32_t TargetSpeed = 50;
 volatile int32_t CurrentSpeed1, CurrentSpeed2;
@@ -35,8 +42,15 @@ int main(void)
     PID_Init(&Motor2_PID);
 
     while (1) {
-        OLED_ShowSignedNum(1, 7, EncoderCount1, 6);
-        OLED_ShowSignedNum(2, 7, EncoderCount2, 6);
+        /* 原子读取 64-bit 编码器计数：短时间禁中断并拷贝到本地变量 */
+        int64_t enc1_copy, enc2_copy;
+        __disable_irq();
+        enc1_copy = EncoderCount1;
+        enc2_copy = EncoderCount2;
+        __enable_irq();
+
+        OLED_ShowSignedNum(1, 7, enc1_copy, 6);
+        OLED_ShowSignedNum(2, 7, enc2_copy, 6);
         OLED_ShowSignedNum(1, 1, CurrentSpeed1, 4);
         OLED_ShowSignedNum(2, 1, CurrentSpeed2, 4);
         OLED_ShowSignedNum(3, 1, TargetSpeed, 4);
@@ -53,7 +67,7 @@ int main(void)
             Serial_Printf("@CUR:%ld\r\n", (long)CurrentSpeed1);
         }
 
-        if (statu == 0) {
+        if (control_mode == CTRL_MODE_SPEED) {
             OLED_ShowString(3, 10, "SpeedControl");
             if (Key_Check(KEY_1, KEY_SINGLE)) {
                 // 状态切换到位置控制
@@ -64,10 +78,10 @@ int main(void)
                 PID_Init(&Motor2_PID);
                 EncoderCount1 = 0;
                 EncoderCount2 = 0;
-                statu = 1;
+                control_mode = CTRL_MODE_POSITION;
             }
         }
-        else if (statu == 1) {
+        else if (control_mode == CTRL_MODE_POSITION) {
             OLED_ShowString(3, 10, "PositionControl");
             if (Key_Check(KEY_1, KEY_SINGLE)) {
                 Motor_SetPWM(0);
@@ -77,7 +91,7 @@ int main(void)
                 PID_Init(&Motor1_PID);
                 EncoderCount1 = 0;
                 EncoderCount2 = 0;
-                statu = 0;
+                control_mode = CTRL_MODE_SPEED;
             }
         }
     }
@@ -94,10 +108,10 @@ void TIM1_UP_IRQHandler(void)
         EncoderCount2 += CurrentSpeed2;
         TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 
-        if (statu == 0) {
+        if (control_mode == CTRL_MODE_SPEED) {
             Motor_UpdateSpeed();
         }
-        else if (statu == 1) {
+        else if (control_mode == CTRL_MODE_POSITION) {
             Motor_Follow_Position();
         }
 
